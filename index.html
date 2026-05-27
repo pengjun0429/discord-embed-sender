@@ -3,31 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Embed 發送器</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Discord Embed 視覺化訊息編輯器 - 玻璃擬態版</title>
+    <style>
+        /* 全局樣式：使用深色背景和毛玻璃基礎配置 */
+        body {
+            background: linear-gradient(135deg, #1f2235, #121421);
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            backdrop-filter: blur(5px); /* 背景輕微模糊 */
+        }
+
+        /* 玻璃擬態面板容器 */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05); /* 半透明白色背景 */
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px); /* 關鍵：毛玻璃模糊效果 */
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1); /* 輕微邊框 */
+            padding: 2rem;
+            width: 80%;
+            max-width: 1000px;
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* 控制台樣式 */
+        .control-panel {
+            flex: 1;
+        }
+
+        .control-panel h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: #ddd;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #5865F2; /* Discord 藍色聚焦 */
+            box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
+        }
+
+        /* 霓虹燈按鈕樣式 */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .send-btn {
+            background-color: transparent;
+            color: #5865F2;
+            border: 2px solid #5865F2 !important;
+            box-shadow: 0 0 10px rgba(88, 101, 242, 0.3);
+        }
+
+        .send-btn:hover {
+            background-color: #5865F2;
+            color: white;
+            box-shadow: 0 0 20px rgba(88, 101, 242, 0.7);
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .copy-btn:hover {
+            background-color: white;
+            color: #121421;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+        }
+
+        /* 預覽區樣式 */
+        .preview-panel {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2); /* 深色背景更像 Discord */
+            border-radius: 8px;
+            padding: 1rem;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .preview-panel h3 {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 1rem;
+        }
+
+        /* 虛擬 Discord Embed 樣式 */
+        .discord-message {
+            background-color: #313338; /* Discord 訊息背景色 */
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'gg sans', 'Noto Sans', sans-serif;
+        }
+
+        .discord-embed {
+            border-left: 4px solid #5865F2; /* 預設邊框顏色 */
+            background-color: #2b2d31; /* Embed 背景色 */
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        .discord-embed-title {
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .discord-embed-description {
+            color: #dbdee1;
+            font-size: 0.875rem;
+            line-height: 1.375rem;
+        }
+
+        /* 裝飾性氣泡 */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: -1;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Discord Embed 視覺化發送器</h2>
-        
-        <label>Webhook 網址：</label>
-        <input type="text" id="webhook-url" placeholder="請貼上 Discord Webhook URL">
 
-        <label>機器人名稱：</label>
-        <input type="text" id="bot-name" placeholder="預設：萬用發送器">
+    <div class="bubble" style="width: 100px; height: 100px; top: 10%; left: 10%;"></div>
+    <div class="bubble" style="width: 150px; height: 150px; bottom: 15%; right: 10%;"></div>
+    <div class="bubble" style="width: 80px; height: 80px; top: 50%; left: 80%;"></div>
 
-        <label>Embed 標題：</label>
-        <input type="text" id="embed-title" placeholder="請輸入標題">
+    <div class="glass-panel">
+        <div class="control-panel">
+            <h2>控制台</h2>
+            <div class="input-group">
+                <label for="webhook-url">Webhook URL</label>
+                <input type="text" id="webhook-url" placeholder="請貼上你的 Discord Webhook URL">
+            </div>
+            <div class="input-group">
+                <label for="bot-name">機器人名稱</label>
+                <input type="text" id="bot-name" placeholder="預設: 萬用發送器">
+            </div>
+            <div class="input-group">
+                <label for="embed-title">Embed 標題</label>
+                <input type="text" id="embed-title" placeholder="請輸入標題">
+            </div>
+            <div class="input-group">
+                <label for="embed-desc">Embed 內容（敘述）</label>
+                <textarea id="embed-desc" rows="5" placeholder="請輸入主要內容..."></textarea>
+            </div>
+            <div class="input-group">
+                <label for="embed-color">邊框顏色</label>
+                <input type="color" id="embed-color" value="#5865F2">
+            </div>
+            <div class="button-group">
+                <button id="send-btn" class="send-btn">發送訊息</button>
+                <button id="copy-btn" class="copy-btn">複製 Payload</button>
+            </div>
+        </div>
 
-        <label>Embed 內容（敘述）：</label>
-        <textarea id="embed-desc" rows="5" placeholder="請輸入主要內容..."></textarea>
-
-        <label>邊框顏色：</label>
-        <input type="color" id="embed-color" value="#5865F2">
-
-        <button id="send-btn">發送訊息到 Discord</button>
+        <div class="preview-panel">
+            <h3>Discord 預覽</h3>
+            <div class="discord-message">
+                <div class="discord-embed" id="preview-embed">
+                    <div class="discord-embed-title" id="preview-title"> Embed 標題將顯示在此</div>
+                    <div class="discord-embed-description" id="preview-desc"> Embed 內容將顯示在此...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="script.js"></script>
-</body>
-</html>
+    <script>
+        // 獲取 DOM 元素
+        const webhookUrlInput = document.getElementById('webhook-url');
+        const botNameInput = document.getElementById('bot-name');
+        const embedTitleInput = document.getElementById('embed-title');
+        const embedDescInput = document.getElementById('embed-desc');
+        const embedColorInput = document.getElementById('embed-color');
+
+        const sendBtn = document.getElementById('send-btn');
+        const copyBtn = document.getElementById('copy-btn');
+
+        const previewEmbed = document.getElementById('preview-embed');
+        const previewTitle = document.getElementById('preview-title');
+        const previewDesc = document.getElementById('preview-desc');
+
+        // 即時預覽功能
+        function updatePreview() {
+            previewTitle.innerText = embedTitleInput.value || "Embed 標題將顯示在此";
+            previewDesc.innerText = embedDescInput.value || "Embed 內容將顯示在此...";
+            previewEmbed.style.borderLeftColor = embedColorInput.value;
+        }
+
+        // 綁定輸入事件以實現即時預覽
+        embedTitleInput.addEventListener('input', updatePreview);
+        embedDescInput.addEventListener('input', updatePreview);
+        embedColorInput.addEventListener('input', updatePreview);
+
+        // 構建 Payload 函數
+        function buildPayload() {
+            const colorHex = embedColorInput.value.replace('#', '');
+            const colorInt = parseInt(colorHex, 16);
+
+            return {
+                username: bot
